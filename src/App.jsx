@@ -101,20 +101,6 @@ export default function App() {
   const [authError, setAuthError] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // --- FORCE FULL WIDTH FIX ---
-  // This effect forces the root container (controlled by Vite/index.css) 
-  // to stop constraining the width.
-  useEffect(() => {
-    const root = document.getElementById('root');
-    if (root) {
-      root.style.maxWidth = '100%';
-      root.style.width = '100%';
-      root.style.margin = '0';
-      root.style.padding = '0';
-      root.style.textAlign = 'left';
-    }
-  }, []);
-
   if (!isConfigured || initError) {
     return <SetupScreen error={initError?.message} />;
   }
