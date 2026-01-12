@@ -148,9 +148,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-amber-50 text-slate-900 pb-24 font-sans">
-      <header className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg sticky top-0 z-20 pb-8 pt-4 px-4 rounded-b-[2.5rem]">
-        {/* Responsive Width Container: max-w-7xl (Wide) */}
-        <div className="w-full max-w-7xl mx-auto flex justify-between items-start">
+      <header className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg sticky top-0 z-20 pb-8 pt-4 rounded-b-[2.5rem]">
+        {/* Full Width Container with responsive padding */}
+        <div className="w-full px-3 sm:px-6 lg:px-8 mx-auto flex justify-between items-start">
           <div>
             <h1 className="font-bold text-3xl flex items-center gap-2 tracking-tight">
               <Map className="h-8 w-8 text-yellow-300" />
@@ -177,8 +177,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Responsive Width Container: max-w-7xl (Wide) */}
-      <main className="w-full max-w-7xl mx-auto px-4 -mt-6">
+      {/* Full Width Main Container */}
+      <main className="w-full px-3 sm:px-6 lg:px-8 mx-auto -mt-6">
         <GeneralInfoBox db={db} appId={appId} />
         <ItineraryList user={user} db={db} appId={appId} />
       </main>
