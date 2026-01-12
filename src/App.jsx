@@ -18,7 +18,9 @@ import {
   Palmtree,
   Sunset,
   AlertTriangle,
-  Map
+  Map,
+  Heart,
+  Landmark
 } from 'lucide-react';
 
 // Firebase Imports
@@ -44,7 +46,6 @@ import {
 } from 'firebase/firestore';
 
 // --- Firebase Configuration ---
-// Updated with your keys
 const firebaseConfig = {
   apiKey: "AIzaSyC1zixPcvf-XDwXI0ou_q0ccRso5XntvBU",
   authDomain: "plot-12d13.firebaseapp.com",
@@ -79,11 +80,11 @@ if (isConfigured) {
 
 // --- App Constants ---
 const ACTIVITY_TYPES = [
+  { id: 'wedding', icon: Heart, label: 'Wedding', color: 'bg-rose-100 text-rose-800 border-rose-200' },
   { id: 'sightseeing', icon: Camera, label: 'Sightseeing', color: 'bg-teal-100 text-teal-800 border-teal-200' },
-  { id: 'food', icon: Utensils, label: 'Tacos & Drinks', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-  { id: 'activity', icon: Sun, label: 'Beach/Activity', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   { id: 'travel', icon: Plane, label: 'Travel', color: 'bg-slate-100 text-slate-700 border-slate-200' },
-  { id: 'nightlife', icon: Music, label: 'Nightlife', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+  { id: 'museum', icon: Landmark, label: 'Museum', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+  { id: 'food', icon: Utensils, label: 'Food', color: 'bg-orange-100 text-orange-800 border-orange-200' },
 ];
 
 const formatTime = (timeStr) => {
@@ -148,8 +149,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-amber-50 text-slate-900 pb-24 font-sans">
       <header className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg sticky top-0 z-20 pb-8 pt-4 px-4 rounded-b-[2.5rem]">
-        {/* Changed max-w-3xl to max-w-7xl for responsive width */}
-        <div className="max-w-7xl mx-auto flex justify-between items-start">
+        {/* Responsive Width Container: max-w-7xl (Wide) */}
+        <div className="w-full max-w-7xl mx-auto flex justify-between items-start">
           <div>
             <h1 className="font-bold text-3xl flex items-center gap-2 tracking-tight">
               <Map className="h-8 w-8 text-yellow-300" />
@@ -176,8 +177,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Changed max-w-3xl to max-w-7xl for responsive width */}
-      <main className="max-w-7xl mx-auto px-4 -mt-6">
+      {/* Responsive Width Container: max-w-7xl (Wide) */}
+      <main className="w-full max-w-7xl mx-auto px-4 -mt-6">
         <GeneralInfoBox db={db} appId={appId} />
         <ItineraryList user={user} db={db} appId={appId} />
       </main>
@@ -215,7 +216,6 @@ function GeneralInfoBox({ db, appId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Path: artifacts/{appId}/public/data/settings/general_info
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general_info');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -292,7 +292,6 @@ function ItineraryList({ user, db, appId }) {
   const [editingEvent, setEditingEvent] = useState(null);
 
   useEffect(() => {
-    // Path: artifacts/{appId}/public/data/itinerary
     const q = collection(db, 'artifacts', appId, 'public', 'data', 'itinerary');
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -436,7 +435,7 @@ function EventModal({ isOpen, onClose, eventToEdit, user, db, appId }) {
     endTime: '',
     location: '',
     notes: '',
-    type: 'activity'
+    type: 'sightseeing'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -449,7 +448,7 @@ function EventModal({ isOpen, onClose, eventToEdit, user, db, appId }) {
         endTime: eventToEdit.endTime || '',
         location: eventToEdit.location || '',
         notes: eventToEdit.notes || '',
-        type: eventToEdit.type || 'activity'
+        type: eventToEdit.type || 'sightseeing'
       });
     }
   }, [eventToEdit]);
@@ -464,10 +463,8 @@ function EventModal({ isOpen, onClose, eventToEdit, user, db, appId }) {
     try {
       const data = { ...formData, updatedAt: serverTimestamp() };
       if (eventToEdit) {
-        // FIXED: Added 'data' segment
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'itinerary', eventToEdit.id), data);
       } else {
-        // FIXED: Added 'data' segment
         await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'itinerary'), {
           ...data,
           userId: user?.uid || 'anon',
