@@ -20,7 +20,10 @@ import {
   AlertTriangle,
   Map,
   Heart,
-  Landmark
+  Landmark,
+  Cloud,
+  CloudOff,
+  CheckCircle2
 } from 'lucide-react';
 
 // Firebase Imports
@@ -69,12 +72,16 @@ if (isConfigured) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     // Enable Offline Persistence
+    // This is the magic line that saves data to the phone's hard drive
     db = initializeFirestore(app, {
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
     });
   } catch (err) {
-    initError = err;
-    console.error("Firebase Initialization Error:", err);
+    // Ignore error if already initialized (hot reload)
+    if (err.code !== 'app/duplicate-app') {
+      initError = err;
+      console.error("Firebase Initialization Error:", err);
+    }
   }
 }
 
@@ -149,7 +156,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-amber-50 text-slate-900 pb-24 font-sans w-full">
       <header className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg sticky top-0 z-20 pb-8 pt-4 rounded-b-[2.5rem]">
-        {/* Full width container */}
         <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto flex justify-between items-start max-w-7xl">
           <div>
             <h1 className="font-bold text-3xl flex items-center gap-2 tracking-tight">
@@ -161,26 +167,27 @@ export default function App() {
                <p className="text-teal-100 text-sm opacity-90 font-medium">Mexico 2026</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-            {isOnline ? (
-              <>
-                <Wifi className="h-3 w-3" />
-                <span>Online</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="h-3 w-3 text-orange-200" />
-                <span className="text-orange-100">Offline</span>
-              </>
-            )}
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2 text-xs font-medium bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+              {isOnline ? (
+                <>
+                  <Wifi className="h-3 w-3" />
+                  <span>Online</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3 text-orange-200" />
+                  <span className="text-orange-100">Offline</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Container - Full Width on Mobile, Max 7xl on Desktop */}
       <main className="w-full px-4 sm:px-6 lg:px-8 mx-auto -mt-6 max-w-7xl">
         <GeneralInfoBox db={db} appId={appId} />
-        <ItineraryList user={user} db={db} appId={appId} />
+        <ItineraryList user={user} db={db} appId={appId} isOnline={isOnline} />
       </main>
     </div>
   );
@@ -285,19 +292,25 @@ function GeneralInfoBox({ db, appId }) {
   );
 }
 
-function ItineraryList({ user, db, appId }) {
+function ItineraryList({ user, db, appId, isOnline }) {
   const [events, setEvents] = useState([]);
   const [dates, setDates] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
+  const [syncStatus, setSyncStatus] = useState('synced'); // 'synced', 'local'
 
   useEffect(() => {
     const q = collection(db, 'artifacts', appId, 'public', 'data', 'itinerary');
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, (snapshot) => {
       const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setEvents(fetched);
       const uniqueDates = [...new Set(fetched.map(e => e.date))].sort();
       setDates(uniqueDates);
+
+      // Check if any data is waiting to be uploaded
+      const hasPendingWrites = snapshot.metadata.hasPendingWrites;
+      setSyncStatus(hasPendingWrites ? 'local' : 'synced');
+
     }, (err) => {
       console.log("Reading from cache...", err);
     });
@@ -315,6 +328,21 @@ function ItineraryList({ user, db, appId }) {
 
   return (
     <div className="space-y-8 pb-12">
+      {/* Sync Status Bar */}
+      <div className="flex justify-end -mt-4 mb-2">
+        <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-wider">
+          {syncStatus === 'synced' ? (
+            <span className="text-teal-600 flex items-center gap-1 bg-teal-50 px-2 py-1 rounded-md">
+              <CheckCircle2 className="h-3 w-3" /> All Saved
+            </span>
+          ) : (
+            <span className="text-orange-500 flex items-center gap-1 bg-orange-50 px-2 py-1 rounded-md animate-pulse">
+              <CloudOff className="h-3 w-3" /> Saving to phone...
+            </span>
+          )}
+        </div>
+      </div>
+
       {dates.length === 0 && !isModalOpen && (
         <div className="text-center py-12 opacity-60">
           <Sunset className="h-16 w-16 mx-auto text-orange-300 mb-3" />
