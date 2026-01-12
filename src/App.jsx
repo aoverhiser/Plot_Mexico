@@ -101,6 +101,20 @@ export default function App() {
   const [authError, setAuthError] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  // --- FORCE FULL WIDTH FIX ---
+  // This effect forces the root container (controlled by Vite/index.css) 
+  // to stop constraining the width.
+  useEffect(() => {
+    const root = document.getElementById('root');
+    if (root) {
+      root.style.maxWidth = '100%';
+      root.style.width = '100%';
+      root.style.margin = '0';
+      root.style.padding = '0';
+      root.style.textAlign = 'left';
+    }
+  }, []);
+
   if (!isConfigured || initError) {
     return <SetupScreen error={initError?.message} />;
   }
@@ -147,10 +161,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 text-slate-900 pb-24 font-sans">
+    <div className="min-h-screen bg-amber-50 text-slate-900 pb-24 font-sans w-full">
       <header className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg sticky top-0 z-20 pb-8 pt-4 rounded-b-[2.5rem]">
-        {/* Full Width Container with responsive padding */}
-        <div className="w-full px-3 sm:px-6 lg:px-8 mx-auto flex justify-between items-start">
+        {/* Full width container */}
+        <div className="w-full px-4 sm:px-6 lg:px-8 mx-auto flex justify-between items-start max-w-7xl">
           <div>
             <h1 className="font-bold text-3xl flex items-center gap-2 tracking-tight">
               <Map className="h-8 w-8 text-yellow-300" />
@@ -177,8 +191,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* Full Width Main Container */}
-      <main className="w-full px-3 sm:px-6 lg:px-8 mx-auto -mt-6">
+      {/* Main Container - Full Width on Mobile, Max 7xl on Desktop */}
+      <main className="w-full px-4 sm:px-6 lg:px-8 mx-auto -mt-6 max-w-7xl">
         <GeneralInfoBox db={db} appId={appId} />
         <ItineraryList user={user} db={db} appId={appId} />
       </main>
@@ -188,7 +202,7 @@ export default function App() {
 
 function SetupScreen({ error }) {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center w-full">
       <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full border border-red-100">
         <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
           <AlertTriangle className="h-8 w-8 text-red-600" />
@@ -241,7 +255,7 @@ function GeneralInfoBox({ db, appId }) {
   if (loading) return null;
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-5 mb-8 relative overflow-hidden group">
+    <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-5 mb-8 relative overflow-hidden group w-full">
       <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-bl-full -z-0 opacity-50" />
       
       <div className="flex justify-between items-center mb-3 relative z-10">
@@ -314,7 +328,7 @@ function ItineraryList({ user, db, appId }) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-12">
       {dates.length === 0 && !isModalOpen && (
         <div className="text-center py-12 opacity-60">
           <Sunset className="h-16 w-16 mx-auto text-orange-300 mb-3" />
@@ -323,37 +337,40 @@ function ItineraryList({ user, db, appId }) {
         </div>
       )}
 
-      {dates.map(date => {
-        const dayEvents = events
-          .filter(e => e.date === date)
-          .sort((a, b) => a.startTime.localeCompare(b.startTime));
-        
-        const dateObj = new Date(date + 'T12:00:00');
-        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        const prettyDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      {/* Responsive Grid for Desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {dates.map(date => {
+          const dayEvents = events
+            .filter(e => e.date === date)
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
+          
+          const dateObj = new Date(date + 'T12:00:00');
+          const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+          const prettyDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-        return (
-          <div key={date} className="space-y-3">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm shadow-sm">
-                {prettyDate}
+          return (
+            <div key={date} className="flex flex-col h-full bg-white/50 rounded-2xl p-4 border border-orange-50/50">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-lg text-sm shadow-sm">
+                  {prettyDate}
+                </div>
+                <h2 className="text-lg font-bold text-slate-700">{dayName}</h2>
               </div>
-              <h2 className="text-lg font-bold text-slate-700">{dayName}</h2>
-            </div>
 
-            <div className="space-y-3 pl-2 border-l-2 border-orange-100 ml-4">
-              {dayEvents.map(event => (
-                <EventCard 
-                  key={event.id} 
-                  event={event} 
-                  onEdit={() => { setEditingEvent(event); setIsModalOpen(true); }}
-                  onDelete={() => handleDelete(event.id)}
-                />
-              ))}
+              <div className="space-y-3 flex-1">
+                {dayEvents.map(event => (
+                  <EventCard 
+                    key={event.id} 
+                    event={event} 
+                    onEdit={() => { setEditingEvent(event); setIsModalOpen(true); }}
+                    onDelete={() => handleDelete(event.id)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       <button
         onClick={() => { setEditingEvent(null); setIsModalOpen(true); }}
@@ -383,7 +400,7 @@ function EventCard({ event, onEdit, onDelete }) {
   return (
     <div 
       onClick={onEdit}
-      className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex gap-4 active:bg-slate-50 transition-all relative overflow-hidden"
+      className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex gap-4 active:bg-slate-50 transition-all relative overflow-hidden hover:shadow-md cursor-pointer"
     >
       <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-xl shrink-0 ${typeStyle.color.replace('text-', 'bg-').replace('bg-', 'bg-opacity-20 text-')}`}>
         <Icon className="h-6 w-6" />
