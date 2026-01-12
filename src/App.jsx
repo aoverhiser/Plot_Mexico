@@ -148,7 +148,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-amber-50 text-slate-900 pb-24 font-sans">
       <header className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg sticky top-0 z-20 pb-8 pt-4 px-4 rounded-b-[2.5rem]">
-        <div className="max-w-3xl mx-auto flex justify-between items-start">
+        {/* Changed max-w-3xl to max-w-7xl for responsive width */}
+        <div className="max-w-7xl mx-auto flex justify-between items-start">
           <div>
             <h1 className="font-bold text-3xl flex items-center gap-2 tracking-tight">
               <Map className="h-8 w-8 text-yellow-300" />
@@ -175,7 +176,8 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 -mt-6">
+      {/* Changed max-w-3xl to max-w-7xl for responsive width */}
+      <main className="max-w-7xl mx-auto px-4 -mt-6">
         <GeneralInfoBox db={db} appId={appId} />
         <ItineraryList user={user} db={db} appId={appId} />
       </main>
@@ -213,7 +215,6 @@ function GeneralInfoBox({ db, appId }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // FIXED: Added 'data' and 'settings' segments to make path odd/valid
     // Path: artifacts/{appId}/public/data/settings/general_info
     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general_info');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -227,7 +228,6 @@ function GeneralInfoBox({ db, appId }) {
 
   const handleSave = async () => {
     try {
-      // FIXED: Matched path structure
       await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'general_info'), {
         content: info,
         updatedAt: serverTimestamp()
@@ -292,7 +292,6 @@ function ItineraryList({ user, db, appId }) {
   const [editingEvent, setEditingEvent] = useState(null);
 
   useEffect(() => {
-    // FIXED: Added 'data' segment to collection path
     // Path: artifacts/{appId}/public/data/itinerary
     const q = collection(db, 'artifacts', appId, 'public', 'data', 'itinerary');
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -309,7 +308,6 @@ function ItineraryList({ user, db, appId }) {
   const handleDelete = async (id) => {
     if (!confirm("Delete this plan?")) return;
     try {
-      // FIXED: Added 'data' segment
       await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'itinerary', id));
     } catch (err) {
       console.error("Delete error:", err);
@@ -403,6 +401,7 @@ function EventCard({ event, onEdit, onDelete }) {
           </button>
         </div>
         
+        {/* Time Row */}
         <div className="flex items-center gap-2 mt-1.5">
           <Clock className="h-3.5 w-3.5 text-teal-600" />
           <span className="text-sm font-medium text-slate-600">
@@ -411,6 +410,7 @@ function EventCard({ event, onEdit, onDelete }) {
           </span>
         </div>
 
+        {/* Address Row */}
         {event.location && (
           <div className="flex items-start gap-2 mt-1.5">
             <MapPin className="h-3.5 w-3.5 text-orange-500 mt-0.5 shrink-0" />
